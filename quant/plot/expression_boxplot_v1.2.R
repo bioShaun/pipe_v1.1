@@ -65,8 +65,8 @@ ggsave(filename = paste(plot_output_path,'Gene_expression.density_plot.pdf',sep 
 #----merge plot----
 p <- grid.arrange(boxplot1,violin,density_plot,nrow = 2,
              layout_matrix = rbind(c(1,2),c(3,3)))
-ggsave(filename = 'Gene_expression.png',type="cairo-png",plot = p,
+ggsave(filename = paste(plot_output_path, 'Gene_expression.png', sep = '/'),type="cairo-png",plot = p,
        width = length(unique(data.m$variable)) * width_parameter,height = 10)
-ggsave(filename = 'Gene_expression.pdf',plot = p,
+ggsave(filename = paste(plot_output_path, 'Gene_expression.pdf', sep = '/'),plot = p,
        width = length(unique(data.m$variable)) * width_parameter,height = 10)
 

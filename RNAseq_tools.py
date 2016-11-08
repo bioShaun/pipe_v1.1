@@ -53,7 +53,7 @@ PATHVIEW = '/home/lxgui/scripts/kegg_pathview.py'
 PATHVIEW_SRNA = '/home/lxgui/scripts/kegg_pathview_sRNA.py'
 PATHVIEW_CK = '/home/lxgui/scripts/check_kegg_pathway.py'
 
-EXP_PLOT = '/home/lxgui/scripts/exp_boxplot.R'
+EXP_PLOT = '/home/lxgui/scripts/quant/plot/expression_boxplot_v1.2.R'
 DIFF_TABLE_TREAT = '/home/lxgui/scripts/diff_table_add_header.py'
 VOLCANO_PLOT = '/home/lxgui/scripts/Volcano_Plot_20160406.R'
 
@@ -1268,13 +1268,16 @@ class RNAseq_pipeline():
         cmd_list.append('mkdir -p %s' % quant_result_dir)
         cmd_list.append('python %s %s/genes.counts.matrix %s %s/Gene.readcount.xls' % (QUANT_ANNO, self.quant_dir, self.anno_files, quant_result_dir))
         cmd_list.append('python %s --table %s/Gene.readcount.xls' % (DIFF_TABLE_TREAT, quant_result_dir))
-        cmd_list.append('python %s %s/genes.TMM.EXPR.matrix %s %s/Gene.tpm.xls' % (QUANT_ANNO, self.quant_dir, self.anno_files, quant_result_dir))
-        cmd_list.append('python %s --table %s/Gene.tpm.xls' % (DIFF_TABLE_TREAT, quant_result_dir))
+        cmd_list.append('cp %s/genes.TMM.EXPR.matrix %s' % (self.quant_dir, quant_result_dir))
+        cmd_list.append('python %s --table %s/genes.TMM.EXPR.matrix' % (DIFF_TABLE_TREAT, quant_result_dir))
+        cmd_list.append('Rscript %s %s/genes.TMM.EXPR.matrix %s' % (EXP_PLOT, quant_result_dir, quant_result_dir))
+        cmd_list.append('python %s %s/genes.TMM.EXPR.matrix %s %s/Gene.tpm.xls' % (QUANT_ANNO, quant_result_dir, self.anno_files, quant_result_dir))
+        cmd_list.append('rm %s/genes.TMM.EXPR.matrix' % quant_result_dir)
         cmd_list.append('cp {self.quant_dir}/sample_correlation/genes.counts.matrix.log2.sample_cor.dat {quant_result_dir}/sample_correlation.data.txt'.format(**locals()))
         cmd_list.append('cp {self.quant_dir}/sample_correlation/genes.counts.matrix.log2.sample_cor_matrix.pdf {quant_result_dir}/sample_correlation.plot.pdf'.format(**locals()))
         cmd_list.append('convert -density 300 {quant_result_dir}/sample_correlation.plot.pdf -quality 90 -flatten {quant_result_dir}/sample_correlation.plot.png'.format(**locals()))
         cmd_list.append('python %s --table %s/sample_correlation.data.txt --add_info Sample' % (DIFF_TABLE_TREAT, quant_result_dir))
-        cmd_list.append('Rscript %s %s/genes.TMM.EXPR.matrix %s' % (EXP_PLOT, self.quant_dir, quant_result_dir))
+#        cmd_list.append('Rscript %s %s/genes.TMM.EXPR.matrix %s' % (EXP_PLOT, self.quant_dir, quant_result_dir))
         cmd_list.append('echo cp quantification results finished\ndate')
 
         ## cp diff analysis results
