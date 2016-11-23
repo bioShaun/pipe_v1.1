@@ -44,8 +44,8 @@ plot_line <- function(data){
   col <- melt_df$color;names(col) <- col
   gg <- ggplot(aes(x=reorder(name,num),y=value,group = variable,colour = color),data = melt_df)+
     geom_line()+geom_point()+expand_limits(y = c(0,1))+
-    scale_y_continuous(breaks = seq(from = 0,to = 1,by = 0.2),
-                       labels = seq(from = 0,to = 1,by = 0.2))+
+#    scale_y_continuous(breaks = seq(from = 0,to = 1,by = 0.2),
+#                       labels = seq(from = 0,to = 1,by = 0.2))+
     scale_color_manual(values = col)+
     #theme(axis.title = element_text(size = rel(0.5)))+
     xlab("")+ylab("")+guides(color = F)

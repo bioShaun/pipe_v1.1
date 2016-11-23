@@ -53,14 +53,16 @@ PATHVIEW = '/home/lxgui/scripts/kegg_pathview.py'
 PATHVIEW_SRNA = '/home/lxgui/scripts/kegg_pathview_sRNA.py'
 PATHVIEW_CK = '/home/lxgui/scripts/check_kegg_pathway.py'
 
+READS_QUALITY_PLOT = '/home/lxgui/scripts/qc/plot/reads_quality_barplot.R'
 EXP_PLOT = '/home/lxgui/scripts/quant/plot/expression_boxplot_v1.2.R'
 DIFF_TABLE_TREAT = '/home/lxgui/scripts/diff_table_add_header.py'
 VOLCANO_PLOT = '/home/lxgui/scripts/Volcano_Plot_20160406.R'
+PCA_PLOT = '/home/lxgui/scripts/quant/plot/PCA.R'
+CLUSTER_LINE = '/home/lxgui/scripts/quant/plot/cluster_plot.R'
 
 GO_RESULT_ANNO = '/home/lxgui/scripts/GO_add_diff_gene.py'
 QUANT_ANNO = '/home/lxgui/scripts/add_gene_anno_v2.py'
 FASTQC_SUMMERY = '/home/lxgui/scripts/fastqc_get_data_info_pipe.py'
-
 
 def get_transcript_info(gtf,genename_dict = {}):
     transcript_info_dict = {}
@@ -1236,13 +1238,13 @@ class RNAseq_pipeline():
             go_cmd.extend(my_go_enrich.run_GO_DAG(self.topgo))
             self.cmd_to_scripts(go_cmd, self.enrich_thread, my_go_enrich.out_dir, self.platform, 'go')
 
-    def get_mRNA_results(self, root_dir):
+    def get_mRNA_results(self, root_dir, proj_name):
         ## qc part to be done
         cmd_list = ['#! /bin/sh']
         scripts_dir =os.path.join(root_dir, 'scripts')
         python_tools.circ_mkdir_unix(scripts_dir)
         cp_results_script = os.path.join(scripts_dir, 'cp_results.sh')
-        self.result_dir = os.path.join(root_dir, 'Analysis_results')
+        self.result_dir = os.path.join(root_dir, '{0}/mRNA_analysis_results'.format(proj_name))
         cmd_list.append('mkdir -p %s' % self.result_dir)
         diff_gene_list_dir = os.path.join(self.diff_dir,'Diff_list')
         
@@ -1255,12 +1257,15 @@ class RNAseq_pipeline():
         diff_cluster_dir = os.path.join(diff_result_dir, 'cluster')
         go_result_dir = os.path.join(self.result_dir, 'enrichment_analysis/GO')
         kegg_result_dir = os.path.join(self.result_dir, 'enrichment_analysis/KEGG')
+        report_plot_dir = os.path.join(self.result_dir, 'report_plot_tmp')
 
         ## qc results
         cmd_list.append('echo get qc results start\ndate')
+        cmd_list.append('mkdir -p %s' % report_plot_dir)
         cmd_list.append('mkdir -p %s' % qc_result_dir)
         cmd_list.append('cut -f2 %s > %s/sample.list' % (self.group_sample, self.cleandata_dir))
         cmd_list.append('python %s %s/sample.list %s %s' % (FASTQC_SUMMERY, self.cleandata_dir, self.qc_dir, qc_result_dir))
+        cmd_list.append('Rscript %s %s/reads_quality %s/reads_quality' % (READS_QUALITY_PLOT, qc_result_dir, qc_result_dir))
         cmd_list.append('echo qc results done\ndate')
 
         ## quant results
@@ -1271,6 +1276,7 @@ class RNAseq_pipeline():
         cmd_list.append('cp %s/genes.TMM.EXPR.matrix %s' % (self.quant_dir, quant_result_dir))
         cmd_list.append('python %s --table %s/genes.TMM.EXPR.matrix' % (DIFF_TABLE_TREAT, quant_result_dir))
         cmd_list.append('Rscript %s %s/genes.TMM.EXPR.matrix %s' % (EXP_PLOT, quant_result_dir, quant_result_dir))
+        cmd_list.append('Rscript %s %s/genes.TMM.EXPR.matrix %s %s' % (PCA_PLOT, quant_result_dir, self.group_sample, quant_result_dir))
         cmd_list.append('python %s %s/genes.TMM.EXPR.matrix %s %s/Gene.tpm.xls' % (QUANT_ANNO, quant_result_dir, self.anno_files, quant_result_dir))
         cmd_list.append('rm %s/genes.TMM.EXPR.matrix' % quant_result_dir)
         cmd_list.append('cp {self.quant_dir}/sample_correlation/genes.counts.matrix.log2.sample_cor.dat {quant_result_dir}/sample_correlation.data.txt'.format(**locals()))
@@ -1310,6 +1316,7 @@ class RNAseq_pipeline():
         for per in [10, 15, 20]:
             cmd_list.append('cp -r %s/diffExpr.P%s_C%s.matrix.RData.clusters_fixed_P_%s %s/clusters_fixed_P_%s' % (self.diff_dir, self.qvalue, self.logfc, per, diff_cluster_dir, per))
             cmd_list.append('rm %s/clusters_fixed_P_%s/*R' % (diff_cluster_dir, per))
+        cmd_list.append('Rscript %s %s/clusters_fixed_P_20 %s' % (CLUSTER_LINE, diff_cluster_dir, report_plot_dir))
         cmd_list.append('echo cp diff analysis results finished\ndate')
 
         ## cp go enrichment analysis results
@@ -1354,24 +1361,3 @@ class RNAseq_pipeline():
         cmd_list.append('echo cp kegg enrichment analysis results finished\ndate')
         ## finished
         python_tools.write_obj_to_file(cmd_list, cp_results_script)
-
-
-
-
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

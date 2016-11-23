@@ -9,8 +9,8 @@ file_path <- argv[1]
 output_path <- argv[2]
 options(stringsAsFactors = F)
 
-file_path <- "/media/zxchen/3dddd6c4-2700-41a5-a677-15b165fa4e64/project/test_proj/mRNA_pipeline/version1/proj1/OM-mRNA-5-Chicken-Analysis/Analysis_results/qc/reads_quality/"
-output_path <- "./"
+#file_path <- "/media/zxchen/3dddd6c4-2700-41a5-a677-15b165fa4e64/project/test_proj/mRNA_pipeline/version1/proj1/OM-mRNA-5-Chicken-Analysis/Analysis_results/qc/reads_quality/"
+#output_path <- "./"
 all_files <- list.files(file_path)
 all_quality_data <- read.delim(paste(file_path,all_files[grep('^all.+txt$',all_files)],sep = "/"),header = T,sep = "\t")
 qulity_data_files <- all_files[grep('*_reads_quality.txt',all_files)] 
@@ -49,7 +49,8 @@ split_str <- function(strings,Split){
 for(i in 1:length(qulity_data)){
   plot_title <- split_str(qulity_data_files[i],Split = '.')[1]
   p <- BarPlot(qulity_data[[i]],Title = plot_title)
-  ggsave(filename = paste(output_path,paste(plot_title,'barplot.png',sep = '_'),sep = "/"),plot = p,width = 8,height = 6)
+  ggsave(filename = paste(output_path,paste(plot_title,'barplot.png',sep = '_'),sep = "/"),type="cairo-png",plot = p,width = 8,height = 6)
+  ggsave(filename = paste(output_path,paste(plot_title,'barplot.pdf',sep = '_'),sep = "/"),plot = p,width = 8,height = 6)
 }
 #----
 all_quality_data$color <- ifelse(all_quality_data$Quality <= 30,'dodgerblue','navy')
@@ -61,4 +62,4 @@ all_quality_data_plot <- ggplot(all_quality_data,aes(x=Quality,y=Percent,fill=co
                colour='red',linetype='dashed',size=1)+theme_bw()+guides(fill = F)+
   scale_y_continuous(labels = scales::percent(seq(from = 0,to = max(all_quality_data$Percent),by = 0.2)))+
   facet_wrap(~Sample_ID,ncol = 3)
-ggsave(filename = paste(output_path,'all_quality_data_barplot.png',sep = '/'),plot = all_quality_data_plot,width = 10,height = 6)
+ggsave(filename = paste(output_path,'all_quality_data_barplot.png',sep = '/'),type="cairo-png",plot = all_quality_data_plot,width = 10,height = 6)

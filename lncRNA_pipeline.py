@@ -15,6 +15,7 @@ import python_tools
 mycwd = os.getcwd()
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--proj_name', help = 'project name', required = True)
 parser.add_argument('--fq_dir',help = 'clean fq file directory.', required = True)
 parser.add_argument('--genome_bowtie2_index',help = 'geneome bowtie2 index.', default = '')
 parser.add_argument('--trans_bowtie2_index',help = 'transcriptome bowtie2 index.', default = '')
@@ -97,8 +98,4 @@ if __name__ == '__main__':
         my_project.run_enrich()
     ## result
     if args.analysis == 'mRNA':
-        my_project.get_mRNA_results(mycwd)
-    
-
-
-
+        my_project.get_mRNA_results(mycwd, args.proj_name)
