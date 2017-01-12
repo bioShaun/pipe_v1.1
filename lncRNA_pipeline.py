@@ -17,9 +17,10 @@ mycwd = os.getcwd()
 parser = argparse.ArgumentParser()
 parser.add_argument('--proj_name', help = 'project name', required = True)
 parser.add_argument('--fq_dir',help = 'clean fq file directory.', required = True)
+parser.add_argument('--sample_list',help = 'samples for analysis.', default = "")
 parser.add_argument('--genome_bowtie2_index',help = 'geneome bowtie2 index.', default = '')
 parser.add_argument('--trans_bowtie2_index',help = 'transcriptome bowtie2 index.', default = '')
-parser.add_argument('--gtf',help = 'gtf file path.', required = True)
+parser.add_argument('--gtf',help = 'gtf file path.', default = '')
 parser.add_argument('--libtype',help = 'library type.', choices = ['fr-unstranded','fr-firststrand','fr-secondstrand'], default = 'fr-firststrand')
 parser.add_argument('--mapping_dir',help = 'clean fq file directory.', default = '')
 parser.add_argument('--mapping_thread',help = 'mapping threads.', default = 8)
@@ -33,6 +34,7 @@ parser.add_argument('--go_anno' , help = 'gene go annotation file.', default = "
 parser.add_argument('--topgo_anno' , help = 'gene topgo annotation file.', default = "")
 parser.add_argument('--kegg_blast' , help = 'kegg blast annotation file.', default = "")
 parser.add_argument('--kegg_species' , help = 'kegg species abbr.', default = "")
+parser.add_argument('--kegg_background' , help = 'kegg background species.', default = "")
 parser.add_argument('--quant_method', help = 'quantification software', default = 'salmon')
 parser.add_argument('--quant_dir', help = 'quantification output directory.', default = "")
 parser.add_argument('--diff_dir', help = 'differential analysis output directory.', default = "")
@@ -53,6 +55,8 @@ if __name__ == '__main__':
     my_project = RNAseq_tools.RNAseq_pipeline()
     ## parameter assignment
     my_project.cleandata_dir = args.fq_dir
+    if args.sample_list:
+        my_project.sample_list = [each.strip() for each in open(args.sample_list)]
     my_project.group_sample = args.group_sample
     my_project.gene_trans = args.gene_transcript
     my_project.transcript_fa = args.transcript_fa
@@ -76,6 +80,10 @@ if __name__ == '__main__':
     my_project.gene_length = args.gene_length
     my_project.enrich_dir = args.enrich_dir
     my_project.kegg_species = args.kegg_species
+    if args.kegg_background:
+        my_project.kegg_background = args.kegg_background
+    else:
+        my_project.kegg_background = args.kegg_species
     my_project.anno_files = args.quant_anno
     my_project.qc_dir = args.qc_dir
     

@@ -25,9 +25,9 @@ if (sum(grep("GO",enrich_type)) == 1) {
 }
 
 for(i in 1:dim(enrich_table)[1]){
-  if(nchar(enrich_table$Name[i]) > 70){
-    enrich_table$Name[i] <- paste(substr(enrich_table$Name[i],1,50),
-substr(enrich_table$Name[i],nchar(enrich_table$Name[i])-10,nchar(enrich_table$Name[i])),sep = "...")
+  if(nchar(enrich_table$Name[i]) > 90){
+    enrich_table$Name[i] <- paste(substr(enrich_table$Name[i],1,45),
+substr(enrich_table$Name[i],nchar(enrich_table$Name[i])-45,nchar(enrich_table$Name[i])),sep = "...")
   }
 }
 

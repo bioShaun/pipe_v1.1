@@ -25,9 +25,9 @@ data.m$value <- log10(data.m$value + 1)
 
 theme_set(theme_bw()+theme(axis.text.x = element_text(angle = -90,color = 'black',
                                                         vjust = 0.5,hjust = 0,
-                                                        size = rel(length(calc_color)*0.02)),
-                             axis.text.y = element_text(size = rel(length(calc_color)*0.02)),
-                             legend.text = element_text(size = rel(length(calc_color)*0.02)),
+                                                        size = rel(length(calc_color)*0.15)),
+                             axis.text.y = element_text(size = rel(length(calc_color)*0.15)),
+                             legend.text = element_text(size = rel(length(calc_color)*0.15)),
                              legend.key = element_blank()))
 
 boxplot1 <- ggplot(data.m,aes(x=variable,y=value,fill=variable))+
@@ -47,7 +47,7 @@ density_plot <- ggplot(data.m,aes(value,fill = variable))+
 #----print out----
 #----each plot----
 
-width_parameter = 0.6
+width_parameter = 1.5
 heigth_parameter = 1.05
 
 ggsave(filename = paste(plot_output_path,'Gene_expression.boxplot.png',sep = '/'),type="cairo-png",plot = boxplot2,

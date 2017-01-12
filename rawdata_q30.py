@@ -39,7 +39,7 @@ with open(args.seq_info) as seq_info_file :
     for n,eachline in enumerate(seq_info_file) :
         if n != 0 :
             eachline_info = eachline.strip().split('\t')
-            wgc_id = eachline_info[1]
+            wgc_id = eachline_info[1].strip()
             q30 = float(eachline_info[-2])
             seq_data = float(eachline_info[-4])
             seq_num = eachline_info[-1]

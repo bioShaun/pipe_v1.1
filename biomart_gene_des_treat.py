@@ -32,7 +32,7 @@ for each_gene in gene_anno_dict:
     out_list = []
     for each_inf in gene_anno_dict[each_gene]:
         if each_inf:
-            out_list.append('|'.join(each_inf))
+            out_list.append('||'.join(each_inf))
         else:
             out_list.append('--')
     out_inf = '\t'.join(out_list)

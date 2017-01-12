@@ -30,8 +30,8 @@ with open(kobas_anno) as kobas_anno_inf:
 with open(extract_out, 'w') as extract_out_inf:
     extract_out_inf.write('Gene_ID\tKO_ID\tKO_description\n')
     for each_gene in gene_ko_dict:
-        ko_id = '|'.join(gene_ko_dict[each_gene][0])
-        ko_des = '|'.join(gene_ko_dict[each_gene][1])
+        ko_id = '||'.join(gene_ko_dict[each_gene][0])
+        ko_des = '||'.join(gene_ko_dict[each_gene][1])
         extract_out_inf.write('{each_gene}\t{ko_id}\t{ko_des}\n'.format(**locals()))
 
 

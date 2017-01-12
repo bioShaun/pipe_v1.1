@@ -16,9 +16,13 @@ datExpr = datExpr0
 save(datExpr, file = "dataInput.RData")
 enableWGCNAThreads()
 #lnames = load(file = "dataInput.RData");
+#powers = 1:20 
+#stf = pickSoftThreshold(datExpr, powerVector = powers, networkType = 'unsigned', verbose = 5)
+#my_power = stf$powerEstimate
+#changed parms: minMoudlesize = 30 mergeCutHeight = 0.25
 net = blockwiseModules(datExpr, power = 6,
-                       TOMType = "unsigned", minModuleSize = 30,
-                       reassignThreshold = 0, mergeCutHeight = 0.25,
+                       TOMType = "unsigned", minModuleSize = 20,
+                       reassignThreshold = 0, mergeCutHeight = 0.10,
                        numericLabels = TRUE, pamRespectsDendro = FALSE,
                        saveTOMs = TRUE,
                        saveTOMFileBase = "femaleMouseTOM", 

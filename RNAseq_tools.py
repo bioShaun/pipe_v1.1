@@ -29,6 +29,7 @@ KO_PEP_DIR = '/home/lxgui/test_kobas/seq_pep/'
 ## softwares and scripts absolute path
 R_BIN = '/usr/local/bin/'
 R_BIN_3_1 = '/home/public/R_packages/R-3.1.0/bin/'
+R_BIN_3_3 = '/home/public/software/R-3.3.2/bin/'
 BLAST_BIN = '/usr/bin/'
 KALLISTO = '/home/public/software/kallisto-0.42.4/kallisto'
 TH_CORE_NUM = 24
@@ -49,6 +50,8 @@ TREAT_KEGG_TABLE = '/home/lxgui/scripts/treat_KEGG_table.py'
 EXTRACT_INF_BY_ID = '/home/lxgui/scripts/extract_info_by_id.py'
 
 ENRICH_BAR = '/home/lxgui/scripts/enrich_bar.2016-4-13_n.R'
+ENRICH_BAR_v2 = '/home/lxgui/scripts/enrichment/plot/enrich_barplot_20170105.R'
+
 PATHVIEW = '/home/lxgui/scripts/kegg_pathview.py'
 PATHVIEW_SRNA = '/home/lxgui/scripts/kegg_pathview_sRNA.py'
 PATHVIEW_CK = '/home/lxgui/scripts/check_kegg_pathway.py'
@@ -143,6 +146,11 @@ def get_gene_info(transcript_info_dict) :
 def enrich_bar_plot(compare_name,output,outname,out_dir) :
     cmd = '%s/Rscript %s %s %s %s %s' % (R_BIN_3_1,ENRICH_BAR,compare_name,output,outname,out_dir)
     return cmd
+
+def enrich_bar_plot_v2(anno, table_dir, diff_list_dir, enrich_type, out_dir):
+    cmd = '{0}/Rscript {1} --anno {2} --table {3} --diff {4} --type {5} -o {6}'.format(R_BIN_3_3, ENRICH_BAR_v2, anno, table_dir, diff_list_dir, enrich_type, out_dir)
+    return cmd
+    
 
 def get_fq_sample_name(fqname) :
     if '_combined_R1.fastq.gz' in fqname :
@@ -385,6 +393,7 @@ class KEGG_enrich :
         self.seq = None
         self.all_blast_out = None
         self.species = None        
+        self.background = None
         self.ko_seq = None  
         self.auto_run = True
         self.blast_dict = {}
@@ -476,11 +485,11 @@ class KEGG_enrich :
             kegg_out_info.close()
         os.system('rm %s' % (kegg_tmp_file))
 
-    def generate_kobas(self,each_blast_out,kegg_output) :
-        cmd = 'run_kobas.py -i {each_blast_out}  -t blastout:tab -s {self.species} -d K -o {kegg_output}'.format(**locals())
+    def generate_kobas(self, each_blast_out, kegg_output) :
+        cmd = 'run_kobas.py -i {each_blast_out}  -t blastout:tab -s {self.species} -d K -o {kegg_output} -b {self.background}'.format(**locals())
         return cmd
 
-    def run_KEGG_enrich_old(self):
+    def run_KEGG_enrich_old(self, background = ""):
         cmd_list = []
         for each_compare in self.enrich_dict :
             for each_reg in self.enrich_dict[each_compare] :
@@ -495,7 +504,7 @@ class KEGG_enrich :
                 each_compare_out_dir = os.path.join(self.out_dir,each_compare)
                 python_tools.circ_mkdir_unix(each_compare_out_dir)
                 kegg_output = os.path.join(each_compare_out_dir,'%s.%s.KEGG.enrich.xls' % (each_compare,each_reg))
-                kegg_cmd = self.generate_kobas(each_blast_out,kegg_output)
+                kegg_cmd = self.generate_kobas(each_blast_out, kegg_output, background)
                 plot_name_tag = '%s.KEGG' % each_reg
                 plot_cmd = enrich_bar_plot(each_compare,kegg_output,plot_name_tag,each_compare_out_dir)
                 if self.auto_run :
@@ -960,6 +969,7 @@ class RNAseq_pipeline():
         ## general parameters
         self.cleandata_dir = None
         self.sample_dict = {}
+        self.sample_list = {}
         ## qc
         self.qc_dir = ""
         self.qc_thread = 2
@@ -990,6 +1000,7 @@ class RNAseq_pipeline():
         self.enrich_thread = 1
         self.compare_list = []
         self.kegg_species = None
+        self.kegg_background = None
         self.go = None
         self.topgo = None
         self.blast_out = None
@@ -1013,6 +1024,11 @@ class RNAseq_pipeline():
                     each_fq_path = os.path.join(self.cleandata_dir,each_fq)
                     self.sample_dict.setdefault(fq_data_name,{})[read_num] = each_fq_path
             python_tools.write_obj_to_json(self.sample_dict, sample_dict_json_file)                
+        if self.sample_list:
+            new_sample_dict = {}
+            for each_sample in self.sample_list:
+                new_sample_dict[each_sample] = self.sample_dict[each_sample]
+            self.sample_dict = new_sample_dict
 
     def cmd_to_scripts(self, cmd_list, thread, out_dir, server = 'server228', name = 'job', split = True):
         parallel_num = SERVER_CORE_DICT[server]//thread
@@ -1080,7 +1096,7 @@ class RNAseq_pipeline():
             if not self.sample_dict:
                 self.get_cleandata()
         mapping_cmd_list = []
-        for each_sample in self.sample_dict:
+        for each_sample in self.sample_dict:           
             read1 = self.sample_dict[each_sample]['1']
             read2 = self.sample_dict[each_sample]['2']
             each_sample_dir = os.path.join(self.mapping_dir,each_sample)
@@ -1133,21 +1149,29 @@ class RNAseq_pipeline():
             if n == 0 and not (self.check_quant_index()):
                 index_script = ['#!/bin/sh\ndate\necho "#### build index start ####"']
                 if self.libtype == 'fr-unstranded':
-                    quant_cmd = 'align_and_estimate_abundance.pl --transcripts {self.transcript_fa} --prep_reference --seqType fq --left {read1} --right {read2} --est_method {self.quant_program} --gene_trans_map {self.gene_trans} --output_dir {each_sample_dir} \nwait'.format(**locals())
+                    quant_cmd = 'align_and_estimate_abundance.pl --transcripts {self.transcript_fa} --prep_reference --seqType fq --left {read1} --right {read2} --est_method {self.quant_program} --output_dir {each_sample_dir}'.format(**locals())
                 elif self.libtype == 'fr-firststrand' and self.quant_program != 'kallisto':
-                    quant_cmd = 'align_and_estimate_abundance.pl --transcripts {self.transcript_fa} --SS_lib_type RF --prep_reference --seqType fq --left {read1} --right {read2} --est_method {self.quant_program} --gene_trans_map {self.gene_trans} --output_dir {each_sample_dir} \nwait'.format(**locals())
+                    quant_cmd = 'align_and_estimate_abundance.pl --transcripts {self.transcript_fa} --SS_lib_type RF --prep_reference --seqType fq --left {read1} --right {read2} --est_method {self.quant_program} --output_dir {each_sample_dir}'.format(**locals())
                 else:
                     sys.exit('wrong parameters combination! : libtype %s quant_program %s' % (self.libtype, self.quant_program))
+                if self.gene_trans:
+                    quant_cmd = '{0} --gene_trans_map {self.gene_trans}\nwait'.format(quant_cmd)
+                else:
+                    quant_cmd = '{0} --trinity_mode\nwait'.format(quant_cmd)
                 index_script.append(quant_cmd)
                 index_script.append('date\necho "#### build index finished ####"')
                 self.cmd_to_scripts(index_script,self.quant_thread, quant_script_dir, self.platform, 'index_build', False)    
             else:
                 if self.libtype == 'fr-unstranded':
-                    quant_cmd = 'align_and_estimate_abundance.pl --transcripts {self.transcript_fa} --seqType fq --left {read1} --right {read2} --est_method {self.quant_program} --gene_trans_map {self.gene_trans} --output_dir {each_sample_dir} &'.format(**locals())
+                    quant_cmd = 'align_and_estimate_abundance.pl --transcripts {self.transcript_fa} --seqType fq --left {read1} --right {read2} --est_method {self.quant_program} --output_dir {each_sample_dir} '.format(**locals())
                 elif self.libtype == 'fr-firststrand' and self.quant_program != 'kallisto':
-                    quant_cmd = 'align_and_estimate_abundance.pl --transcripts {self.transcript_fa} --SS_lib_type RF --seqType fq --left {read1} --right {read2} --est_method {self.quant_program} --gene_trans_map {self.gene_trans} --output_dir {each_sample_dir} &'.format(**locals())
+                    quant_cmd = 'align_and_estimate_abundance.pl --transcripts {self.transcript_fa} --SS_lib_type RF --seqType fq --left {read1} --right {read2} --est_method {self.quant_program} --output_dir {each_sample_dir} '.format(**locals())
                 else:
                     sys.exit('wrong parameters combination! : libtype %s quant_program %s' % (self.libtype, self.quant_program))
+                if self.gene_trans:
+                    quant_cmd = '{0} --gene_trans_map {self.gene_trans} &'.format(quant_cmd)
+                else:
+                    quant_cmd = '{0} --trinity_mode &'.format(quant_cmd)
                 quant_cmd_list.append(quant_cmd)
         self.cmd_to_scripts(quant_cmd_list, self.quant_thread, quant_script_dir, self.platform, 'quant')
         diff_cmd_list.append('date\necho "#### Merge individual quant table ####"')
@@ -1206,6 +1230,7 @@ class RNAseq_pipeline():
             diff_gene_list_dir = os.path.join(self.diff_dir,'Diff_list')
             my_kegg_enrich.all_blast_out = self.blast_out
             my_kegg_enrich.species = self.kegg_species
+            my_kegg_enrich.background = self.kegg_background
             my_kegg_enrich.auto_run = False
         for each_compare in self.compare_list:
             each_GO_compare_outdir = os.path.join(my_go_enrich.out_dir,each_compare)
@@ -1322,10 +1347,6 @@ class RNAseq_pipeline():
         ## cp go enrichment analysis results
         cmd_list.append('echo cp go enrichment analysis results start\ndate')
         for each_compare in self.compare_list:
-            ## cp bar plot
-            each_go_bar_dir = os.path.join(go_result_dir, 'GO_bar_plot/%s' % each_compare)
-            cmd_list.append('mkdir -p %s' % (each_go_bar_dir))
-            cmd_list.append('cp %s/GO/%s/*bar* %s' % (self.enrich_dir, each_compare, each_go_bar_dir))
             ## cp dag plot
             each_go_dag_dir = os.path.join(go_result_dir, 'GO_dag_plot/%s' % each_compare)
             cmd_list.append('mkdir -p %s' % (each_go_dag_dir))
@@ -1341,19 +1362,23 @@ class RNAseq_pipeline():
                 diff_gene_list_dir = os.path.join(self.diff_dir,'Diff_list')
                 each_diff_list = os.path.join(diff_gene_list_dir, '%s.%s.list' % (each_compare, each_cond))
                 cmd_list.append('python %s %s %s %s %s' % (GO_RESULT_ANNO, each_go_file, each_diff_list, self.go, each_go_out))
+            ## cp bar plot
+            each_go_bar_dir = os.path.join(go_result_dir, 'GO_bar_plot/%s' % each_compare)
+            cmd_list.append('mkdir -p %s' % (each_go_bar_dir))
+            cmd_list.append('{0}/Rscript {1} --anno {2} --table {3} --diff {4} --type {5} -o {6}'.format(R_BIN_3_3, ENRICH_BAR_v2, self.go, each_go_tabel_dir, diff_gene_list_dir, 'go', each_go_bar_dir))
         cmd_list.append('echo cp go enrichment analysis results finished\ndate')
 
         ## cp kegg enrichment analysis results
         cmd_list.append('echo cp kegg enrichment analysis results start\ndate')
         for each_compare in self.compare_list:
-            ## cp kegg bar plot
-            each_kegg_bar_dir = os.path.join(kegg_result_dir, 'KEGG_bar_plot/%s' % each_compare)
-            cmd_list.append('mkdir -p %s' % (each_kegg_bar_dir))
-            cmd_list.append('cp %s/KEGG/%s/*bar* %s' % (self.enrich_dir, each_compare, each_kegg_bar_dir))
             ## cp kegg table
             each_kegg_tabel_dir = os.path.join(kegg_result_dir, 'KEGG_enrich_table/%s' % each_compare)
             cmd_list.append('mkdir -p %s' % (each_kegg_tabel_dir))
             cmd_list.append('cp %s/KEGG/%s/*enrich.xls %s' % (self.enrich_dir, each_compare, each_kegg_tabel_dir))
+            ## cp kegg bar plot
+            each_kegg_bar_dir = os.path.join(kegg_result_dir, 'KEGG_bar_plot/%s' % each_compare)
+            cmd_list.append('mkdir -p %s' % (each_kegg_bar_dir))
+            cmd_list.append('{0}/Rscript {1} --anno {2} --table {3} --diff {4} --type {5} -o {6}'.format(R_BIN_3_3, ENRICH_BAR_v2, self.blast_out, each_kegg_tabel_dir, diff_gene_list_dir, 'kegg', each_kegg_bar_dir))
             ## cp kegg pathway
             each_kegg_pathway_dir = os.path.join(kegg_result_dir, 'KEGG_pathway/%s' % each_compare)
             cmd_list.append('mkdir -p %s' % (each_kegg_pathway_dir))

@@ -12,7 +12,7 @@ out_dir <- args[5]
 geneID2GO <- readMappings(file = gene_go_mape)
 geneNames <- names(geneID2GO)
 diff_gene <- read.table(file = diff_gene,header = F)
-enrich_result <- read.table(file = enrich_result,header = T, sep = '\t', row.names = 1)
+enrich_result <- read.delim(file = enrich_result,header = T, sep = '\t', row.names = 1)
 geneList <- factor(as.integer(geneNames %in% diff_gene$V1))
 names(geneList) <- geneNames
 

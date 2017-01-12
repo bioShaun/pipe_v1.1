@@ -1,6 +1,13 @@
-"""Usage:
-  cp_seq_data_v1.py [--cp_info_file=<file_path>] [--log_dir=<logs_directory>]
-  cp_seq_data_v1.py -h | --help | --version
+"""
+Usage:
+  cp_seq_data_v1.py --cp_info_file=<file_path> --log_dir=<logs_directory>
+
+Options:
+  -h --help                   Show this screen
+  --version                   Show version
+  --cp_info_file=<file_path>  data file information; first column:file from path, second column:file to path
+  --log_dir=<logs_directory>  cp log information store directory
+
 """
 
 
@@ -30,9 +37,6 @@ if __name__ == '__main__':
     arguments = docopt(__doc__, sys.argv[1:], version='v1')
     cp_info_file = arguments['--cp_info_file']
     log_dir = arguments['--log_dir']
-    if not cp_info_file or not log_dir:
-        print(__doc__)
-        sys.exit(1)
 
     ## get cp info dict
     cp_info_dict = {}

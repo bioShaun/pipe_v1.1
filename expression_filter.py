@@ -1,18 +1,19 @@
 import sys
 import os
 
-if not len(sys.argv) == 4:
-    print 'python ' + sys.argv[0] + ' samples expression out_dir'
+if not len(sys.argv) == 5:
+    print 'python ' + sys.argv[0] + ' samples expression cutoff prefix'
     sys.exit(0)
 
 sample_list_file = sys.argv[1]
 exp_file = sys.argv[2]
-out_dir = sys.argv[3]
+cutoff = float(sys.argv[3])
+out_prefix = sys.argv[4]
 
 sample_list = [each.strip() for each in open(sample_list_file)]
 
-out_put_gene_file = os.path.join(out_dir, 'expressed.id.list')
-out_put_exp_file = os.path.join(out_dir, 'expressed.table.txt')
+out_put_gene_file = '{0}.id.list'.format(out_prefix)
+out_put_exp_file  = '{0}.table.txt'.format(out_prefix)
 
 sample_index = []
 header = ['ID']
@@ -33,7 +34,7 @@ with open(exp_file) as exp_file_info:
             for m, each in enumerate(eachline_info):
                 if m in sample_index:
                     exp_list.append(float(each))
-            if max(exp_list) > 0.1:
+            if max(exp_list) >= cutoff:
                 exp_list = [str(each) for each in exp_list]
                 exp_out = '\t'.join(exp_list)
                 out_put_exp_file_info.write('%s\t%s\n' % (each_id, exp_out))

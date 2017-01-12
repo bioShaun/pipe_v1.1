@@ -40,6 +40,7 @@ parser.add_argument('--diff_out',help = 'DESeq2 differential analysis out direct
 parser.add_argument('--diff_type',help = 'gene or transcript differential analysis out.',choices = ['gene','transcript'], default = 'gene')
 parser.add_argument('--compare', help = 'Compare name list.', required =True)
 parser.add_argument('--species' , help = 'KEGG species.', required =True)
+parser.add_argument('--background' , help = 'KEGG analysis backgroud.', default = "")
 parser.add_argument('--diffmethod', help = 'differential analysis software', required = True)
 parser.add_argument('--gtf' , help = 'GTF file.', required =True)
 parser.add_argument('--go' , help = 'GO file, seperated with (,).', default = '')
@@ -55,6 +56,11 @@ parser.add_argument('--sRNA', action='store_true', help = 'sRNA analysis', defau
 parser.add_argument('--sRNA_target', help = 'sRNA target pairs', default = '')
 parser.add_argument('--out_dir', help = 'output directory.', default = mycwd)
 args = parser.parse_args()
+
+if not args.background:
+    kegg_background = args.species
+else:
+    kegg_background = args.background
 
 compare_list = [each.strip() for each in open(args.compare)]
 id_go_dict = {}
@@ -177,7 +183,7 @@ if __name__ == '__main__':
 
     ## run kegg enrichment
     if not args.nokegg :
-        my_kegg_enrich.run_KEGG_enrich_old()
+        my_kegg_enrich.run_KEGG_enrich_old(kegg_background)
 
     ## run go enrichment
     if not args.nogo :
