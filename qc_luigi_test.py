@@ -25,8 +25,8 @@ class run_qc(luigi.Task):
 
     def run(self):
         tmp = run_cmd(['fastqc',
-                        '{self.CleanDir}/{self.sample}_1_clean.fq.gz'.format(**locals()),
-                        '{self.CleanDir}/{self.sample}_2_clean.fq.gz'.format(**locals()),
+                        '{self.CleanDir}/{self.sample}_1.clean.fq.gz'.format(**locals()),
+                        '{self.CleanDir}/{self.sample}_2.clean.fq.gz'.format(**locals()),
                         '-o',
                         '{self.OutDir}'.format(**locals())])
         with self.output().open('w') as qc_logs:

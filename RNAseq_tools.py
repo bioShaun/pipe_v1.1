@@ -1065,7 +1065,7 @@ class RNAseq_pipeline():
             read1 = self.sample_dict[each_sample]['1']
             read2 = self.sample_dict[each_sample]['2']            
             if self.mapping_program == 'tophat2':
-                qc_cmd_list.append('fastqc {read1} {read2} -o {self.qc_dir}'.format(**locals()))
+                qc_cmd_list.append('/home/public/software/FastQC/fastqc {read1} {read2} -o {self.qc_dir}'.format(**locals()))
         self.cmd_to_scripts(qc_cmd_list, self.qc_thread, self.qc_dir, self.platform)
 
 
@@ -1155,7 +1155,7 @@ class RNAseq_pipeline():
                 else:
                     sys.exit('wrong parameters combination! : libtype %s quant_program %s' % (self.libtype, self.quant_program))
                 if self.gene_trans:
-                    quant_cmd = '{0} --gene_trans_map {self.gene_trans}\nwait'.format(quant_cmd)
+                    quant_cmd = '{0} --gene_trans_map {1}\nwait'.format(quant_cmd, self.gene_trans)
                 else:
                     quant_cmd = '{0} --trinity_mode\nwait'.format(quant_cmd)
                 index_script.append(quant_cmd)
@@ -1169,7 +1169,7 @@ class RNAseq_pipeline():
                 else:
                     sys.exit('wrong parameters combination! : libtype %s quant_program %s' % (self.libtype, self.quant_program))
                 if self.gene_trans:
-                    quant_cmd = '{0} --gene_trans_map {self.gene_trans} &'.format(quant_cmd)
+                    quant_cmd = '{0} --gene_trans_map {1} &'.format(quant_cmd, self.gene_trans)
                 else:
                     quant_cmd = '{0} --trinity_mode &'.format(quant_cmd)
                 quant_cmd_list.append(quant_cmd)

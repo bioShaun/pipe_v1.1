@@ -34,7 +34,7 @@ with open(exp_file) as exp_file_info:
             for m, each in enumerate(eachline_info):
                 if m in sample_index:
                     exp_list.append(float(each))
-            if max(exp_list) >= cutoff:
+            if max(exp_list) > cutoff:
                 exp_list = [str(each) for each in exp_list]
                 exp_out = '\t'.join(exp_list)
                 out_put_exp_file_info.write('%s\t%s\n' % (each_id, exp_out))

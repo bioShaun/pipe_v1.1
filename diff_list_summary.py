@@ -47,5 +47,3 @@ with open(diff_gene_summary_file, 'w') as diff_gene_summary_file_inf:
         each_diff_stat = ','.join(diff_gene_dict[each_gene])
         diff_gene_summary_file_inf.write('{0}\t{1}\n'.format(each_gene, each_diff_stat))
 
-
-

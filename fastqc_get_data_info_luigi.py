@@ -14,7 +14,7 @@ sample_info_dict = {}
 for each_sample in sample_list:
     sample_info_dict[each_sample] = [0, 0, 0, []]
     for n in (1, 2):
-        each_qc_dir = os.path.join(qc_dir, '%s_%s_clean.fq_fastqc' % (each_sample, n))
+        each_qc_dir = os.path.join(qc_dir, '%s_%s.clean.fq_fastqc' % (each_sample, n))
         each_qc_file = os.path.join(each_qc_dir, 'fastqc_data.txt')
         with open(each_qc_file) as each_qc_file_info:
             q30_flag = 0
