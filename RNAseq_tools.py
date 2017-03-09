@@ -504,7 +504,7 @@ class KEGG_enrich :
                 each_compare_out_dir = os.path.join(self.out_dir,each_compare)
                 python_tools.circ_mkdir_unix(each_compare_out_dir)
                 kegg_output = os.path.join(each_compare_out_dir,'%s.%s.KEGG.enrich.xls' % (each_compare,each_reg))
-                kegg_cmd = self.generate_kobas(each_blast_out, kegg_output, background)
+                kegg_cmd = self.generate_kobas(each_blast_out, kegg_output)
                 plot_name_tag = '%s.KEGG' % each_reg
                 plot_cmd = enrich_bar_plot(each_compare,kegg_output,plot_name_tag,each_compare_out_dir)
                 if self.auto_run :
@@ -1065,7 +1065,7 @@ class RNAseq_pipeline():
             read1 = self.sample_dict[each_sample]['1']
             read2 = self.sample_dict[each_sample]['2']            
             if self.mapping_program == 'tophat2':
-                qc_cmd_list.append('/home/public/software/FastQC/fastqc {read1} {read2} -o {self.qc_dir}'.format(**locals()))
+                qc_cmd_list.append('/home/public/software/FastQC/fastqc {read1} {read2} --extract -o {self.qc_dir}'.format(**locals()))
         self.cmd_to_scripts(qc_cmd_list, self.qc_thread, self.qc_dir, self.platform)
 
 
@@ -1282,7 +1282,7 @@ class RNAseq_pipeline():
         diff_cluster_dir = os.path.join(diff_result_dir, 'cluster')
         go_result_dir = os.path.join(self.result_dir, 'enrichment_analysis/GO')
         kegg_result_dir = os.path.join(self.result_dir, 'enrichment_analysis/KEGG')
-        report_plot_dir = os.path.join(self.result_dir, 'report_plot_tmp')
+        report_plot_dir = os.path.join(self.result_dir, 'report_tmp')
 
         ## qc results
         cmd_list.append('echo get qc results start\ndate')
@@ -1291,6 +1291,7 @@ class RNAseq_pipeline():
         cmd_list.append('cut -f2 %s > %s/sample.list' % (self.group_sample, self.cleandata_dir))
         cmd_list.append('python %s %s/sample.list %s %s' % (FASTQC_SUMMERY, self.cleandata_dir, self.qc_dir, qc_result_dir))
         cmd_list.append('Rscript %s %s/reads_quality %s/reads_quality' % (READS_QUALITY_PLOT, qc_result_dir, qc_result_dir))
+        cmd_list.append('mv %s/reads_quality/all_quality_data_barplot.png %s' % (qc_result_dir, report_plot_dir))
         cmd_list.append('echo qc results done\ndate')
 
         ## quant results
@@ -1329,6 +1330,10 @@ class RNAseq_pipeline():
                 each_cond_up_file = glob.glob(r'%s/*%s.*.DE_results.*.%s-UP.subset' % (self.diff_dir,each_compare,each_cond))[0]
                 each_cond_up_result_file = os.path.join(each_table_compare_dir, '%s.%s.subset.txt' % (each_compare, each_name))
                 cmd_list.append('python %s %s %s %s' % (QUANT_ANNO, each_cond_up_file, self.anno_files, each_cond_up_result_file))
+        #python ~/scripts/quant/analysis/merge_diff_table.py OM-mRNA-5-Wheat_part1/mRNA_analysis_results/differential_analysis/diff_table/ OM-mRNA-5-Wheat_part1/mRNA_analysis_results/report_tmp/merged.diff.table.txt
+        #Rscript ~/scripts/quant/plot/Volcano_Plot_20170110.R --diff OM-mRNA-5-Wheat_part1/mRNA_analysis_results/report_tmp/merged.diff.table.txt --out_dir OM-mRNA-5-Wheat_part1/mRNA_analysis_results/report_tmp/
+        cmd_list.append('python ~/scripts/quant/analysis/merge_diff_table.py %s %s/merged.diff.table.txt' % (diff_table_dir, report_plot_dir))
+        cmd_list.append('Rscript ~/scripts/quant/plot/Volcano_Plot_20170110.R --diff %s/merged.diff.table.txt  --out_dir %s' % (report_plot_dir, report_plot_dir))
         heatmap_pdf = os.path.join(self.diff_dir, 'diffExpr.P%s_C%s.matrix.log2.centered.genes_vs_samples_heatmap.pdf' % (self.qvalue, self.logfc))
         cmd_list.append('cp %s/numDE_feature_counts.P%s_C%s.matrix %s/DE_summary.txt' % (self.diff_dir, self.qvalue, self.logfc, diff_table_dir))
         cmd_list.append('python %s --table %s/DE_summary.txt --add_info Group' % (DIFF_TABLE_TREAT, diff_table_dir))        
@@ -1341,11 +1346,12 @@ class RNAseq_pipeline():
         for per in [10, 15, 20]:
             cmd_list.append('cp -r %s/diffExpr.P%s_C%s.matrix.RData.clusters_fixed_P_%s %s/clusters_fixed_P_%s' % (self.diff_dir, self.qvalue, self.logfc, per, diff_cluster_dir, per))
             cmd_list.append('rm %s/clusters_fixed_P_%s/*R' % (diff_cluster_dir, per))
-        cmd_list.append('Rscript %s %s/clusters_fixed_P_20 %s' % (CLUSTER_LINE, diff_cluster_dir, report_plot_dir))
+        cmd_list.append('Rscript %s %s/clusters_fixed_P_10 %s' % (CLUSTER_LINE, diff_cluster_dir, report_plot_dir))
         cmd_list.append('echo cp diff analysis results finished\ndate')
 
         ## cp go enrichment analysis results
         cmd_list.append('echo cp go enrichment analysis results start\ndate')
+        example_compare = self.compare_list[0]
         for each_compare in self.compare_list:
             ## cp dag plot
             each_go_dag_dir = os.path.join(go_result_dir, 'GO_dag_plot/%s' % each_compare)
@@ -1366,6 +1372,7 @@ class RNAseq_pipeline():
             each_go_bar_dir = os.path.join(go_result_dir, 'GO_bar_plot/%s' % each_compare)
             cmd_list.append('mkdir -p %s' % (each_go_bar_dir))
             cmd_list.append('{0}/Rscript {1} --anno {2} --table {3} --diff {4} --type {5} -o {6}'.format(R_BIN_3_3, ENRICH_BAR_v2, self.go, each_go_tabel_dir, diff_gene_list_dir, 'go', each_go_bar_dir))
+        cmd_list.append('cp %s/GO_bar_plot/%s/%s_GO.bar.png %s/GO_example_barplot.png' % (go_result_dir, example_compare, example_compare, report_plot_dir))
         cmd_list.append('echo cp go enrichment analysis results finished\ndate')
 
         ## cp kegg enrichment analysis results
@@ -1383,6 +1390,7 @@ class RNAseq_pipeline():
             each_kegg_pathway_dir = os.path.join(kegg_result_dir, 'KEGG_pathway/%s' % each_compare)
             cmd_list.append('mkdir -p %s' % (each_kegg_pathway_dir))
             cmd_list.append('cp -r %s/KEGG/%s/*pathway %s' % (self.enrich_dir, each_compare, each_kegg_pathway_dir))
+        cmd_list.append('cp %s/KEGG_bar_plot/%s/%s_KEGG.bar.png %s/KEGG_example_barplot.png' % (kegg_result_dir, example_compare, example_compare, report_plot_dir))
         cmd_list.append('echo cp kegg enrichment analysis results finished\ndate')
         ## finished
         python_tools.write_obj_to_file(cmd_list, cp_results_script)

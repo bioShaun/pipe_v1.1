@@ -29,7 +29,7 @@ def get_fc_row(diff_method):
     elif diff_method == 'Cuffdiff' :
         return 6
     elif diff_method == 'DESeq2' :
-        return 3
+        return 5
     else :
         sys.exit('wrong diff analysis method! : %s ' % diff_method)
 

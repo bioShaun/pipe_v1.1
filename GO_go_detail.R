@@ -4,8 +4,8 @@ go_input <- args[1]
 go_output <- args[2]
 
 go_file <- read.table(go_input, header = T, sep = ',', stringsAsFactors= F)  
-go_file <- subset(go_file, GO != "")
-go_list <- unique(go_file$GO)
+go_file <- subset(go_file, go_id != "")
+go_list <- unique(go_file$go_id)
 go_out <- as.data.frame(go_list)
 go_term <- Term(go_list)
 go_ontology <- Ontology(go_list)

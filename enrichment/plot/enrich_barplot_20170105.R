@@ -1,7 +1,7 @@
-q#mRNA report KEGG and GO barplot
+#mRNA report KEGG and GO barplot
 suppressMessages(library(ggplot2))
 suppressMessages(library(dplyr))
-library(argparser, quietly = TRUE)
+suppressMessages(library(argparser))
 options(stringsAsFactors = F)
 #----set params-----
 

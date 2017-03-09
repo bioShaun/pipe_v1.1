@@ -150,8 +150,8 @@ p <- ggplot(dpa_result,aes(logFC,logFDR,colour = color))+geom_point(size = .6)+
   scale_y_continuous(breaks = c(1.3,10,20,30),limits = c(0,logFDR_limit))+
   scale_x_continuous(breaks = c(-8,-4,-1,0,1,4,8),limits = c(-logFC_limit,logFC_limit))+
   labs(color = all_count)+facet_wrap(~Compare)+guides(color=F)
-ggsave(filename=paste(out_dir,"merge_Volcano_plot.pdf",sep="/"),plot=p,width = 8,height = 8)
-ggsave(filename=paste(out_dir,"merge_Volcano_plot.png",sep="/"),type="cairo-png",plot=p,width = 8,height = 8,dpi = 300)
+#ggsave(filename=paste(out_dir,"merge_Volcano_plot.pdf",sep="/"),plot=p,width = 8,height = 8)
+ggsave(filename=paste(out_dir,"volcano_merge_plot.png",sep="/"),type="cairo-png",plot=p,width = 8,height = 8,dpi = 300)
 
 
 

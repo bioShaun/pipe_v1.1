@@ -22,6 +22,9 @@ dpa_results <- diff_file_info[,c("logFC","FDR"),with =F]
 dpa_results$logFDR <- -log10(dpa_results$FDR)
 dpa_results$color <- "blue"
 
+up_name = unlist(strsplit(name,split = "_vs_"))[2]
+down_name = unlist(strsplit(name,split = "_vs_"))[1]
+
 for(i in 1:dim(dpa_results)[1]){
   if(dpa_results$logFC[i] > lgfc & dpa_results$FDR[i] < p)
       dpa_results$color[i] <- "red"
@@ -66,8 +69,8 @@ logFDR_limit <- ifelse(logFDR_limit<35,35,logFDR_limit)
 #green2_count <- count$Freq[which(count$Var1 == "green2")]
 #red1_label <- paste("up regulated",red1_count,sep = ":")
 #green1_label <- paste("down regulated",green1_count,sep = ":")
-red_label <- paste("up regulated",red_count,sep = ":")
-green_label <- paste("down regulated",green_count,sep = ":")
+red_label <- paste("No.", up_name, "up-regulated genes:",red_count,sep = " ")
+green_label <- paste("No.", down_name, "down regulated genes:",green_count,sep = " ")
 #brewer for color
 red <- brewer.pal(6,"Reds")[6]
 green <- brewer.pal(6,"Greens")[6]
